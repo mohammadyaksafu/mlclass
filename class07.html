@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ML Pipeline Manual — Scikit-learn Classification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1216;
+    --bg-elev:#161a20;
+    --bg-code:#0b0d10;
+    --ink:#e9e3d6;
+    --ink-dim:#a39b89;
+    --ink-faint:#6b6557;
+    --accent:#e8a14b;
+    --accent-soft:rgba(232,161,75,0.12);
+    --teal:#6ec1b8;
+    --rust:#d96b4a;
+    --line:#2a2f37;
+    --line-soft:#1f242b;
+    --why-bg:rgba(232,161,75,0.06);
+    --why-border:rgba(232,161,75,0.35);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:80px}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:300;
+    font-size:16px;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(232,161,75,0.06), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, rgba(110,193,184,0.04), transparent 60%);
+    background-attachment:fixed;
+  }
+  ::selection{background:var(--accent);color:#0f1216}
+
+  /* === Layout === */
+  .shell{display:grid;grid-template-columns:280px 1fr;max-width:1400px;margin:0 auto;}
+  nav.sidebar{
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    padding:40px 24px 60px;
+    border-right:1px solid var(--line-soft);
+    background:rgba(15,18,22,0.6);
+    backdrop-filter:blur(8px);
+  }
+  .brand{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:20px;
+    letter-spacing:-0.02em;
+    margin-bottom:4px;
+  }
+  .brand span{color:var(--accent)}
+  .brand-sub{
+    font-size:11px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+    margin-bottom:36px;
+  }
+  .nav-list{list-style:none;padding:0;margin:0}
+  .nav-list li{margin:2px 0}
+  .nav-list a{
+    display:flex; gap:12px; align-items:baseline;
+    color:var(--ink-dim);
+    text-decoration:none;
+    font-size:13.5px;
+    padding:6px 10px;
+    border-radius:6px;
+    transition:all .15s ease;
+    border-left:2px solid transparent;
+  }
+  .nav-list a:hover{color:var(--ink);background:rgba(255,255,255,0.02)}
+  .nav-list a .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    width:22px;
+    flex-shrink:0;
+  }
+  .nav-list a.active{
+    color:var(--accent);
+    background:var(--accent-soft);
+    border-left-color:var(--accent);
+  }
+  .nav-list a.active .num{color:var(--accent)}
+
+  main{padding:0 64px 120px; max-width:920px;}
+
+  /* === Hero === */
+  .hero{
+    padding:90px 0 70px;
+    border-bottom:1px solid var(--line-soft);
+    margin-bottom:64px;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size:11px; letter-spacing:0.24em; text-transform:uppercase;
+    color:var(--accent); font-weight:500;
+    margin-bottom:28px;
+  }
+  .eyebrow::before{
+    content:""; width:32px; height:1px; background:var(--accent);
+  }
+  h1.title{
+    font-family:'Fraunces',serif;
+    font-weight:300;
+    font-size:clamp(40px,5.5vw,68px);
+    line-height:1.02;
+    letter-spacing:-0.025em;
+    margin:0 0 24px;
+  }
+  h1.title em{
+    font-style:italic;
+    font-weight:400;
+    color:var(--accent);
+  }
+  .lede{
+    font-size:18px;
+    color:var(--ink-dim);
+    max-width:620px;
+    line-height:1.6;
+    font-weight:300;
+  }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:24px;
+    margin-top:36px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+  .meta-row span strong{color:var(--ink);font-weight:500}
+
+  /* === Section === */
+  section{padding:48px 0; scroll-margin-top:24px;}
+  section + section{border-top:1px solid var(--line-soft);}
+  .sec-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    letter-spacing:0.1em;
+    margin-bottom:12px;
+  }
+  h2{
+    font-family:'Fraunces',serif;
+    font-weight:400;
+    font-size:38px;
+    line-height:1.1;
+    letter-spacing:-0.02em;
+    margin:0 0 24px;
+  }
+  h2 em{font-style:italic;color:var(--accent);font-weight:400}
+  h3{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:23px;
+    margin:48px 0 14px;
+    letter-spacing:-0.01em;
+  }
+  h3 .h3-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--accent);
+    margin-right:10px;
+    font-weight:400;
+  }
+  p{margin:0 0 16px}
+  strong{color:var(--ink);font-weight:500}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(232,161,75,0.3)}
+  a:hover{border-bottom-color:var(--accent)}
+  ul,ol{margin:0 0 20px;padding-left:22px}
+  li{margin-bottom:6px}
+  li::marker{color:var(--accent)}
+
+  /* === Why callout === */
+  .why{
+    background:var(--why-bg);
+    border:1px solid var(--why-border);
+    border-left:3px solid var(--accent);
+    padding:18px 22px;
+    margin:22px 0;
+    border-radius:4px;
+    position:relative;
+  }
+  .why-label{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+  .why p:last-child{margin-bottom:0}
+  .why-inline{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--accent);
+    background:var(--accent-soft);
+    padding:2px 8px; border-radius:3px;
+    margin-right:6px; vertical-align:middle;
+    text-transform:uppercase; letter-spacing:0.1em;
+    font-weight:500;
+  }
+
+  /* === Code === */
+  pre[class*="language-"]{
+    background:var(--bg-code) !important;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px 22px !important;
+    margin:22px 0;
+    font-size:13.5px !important;
+    line-height:1.65 !important;
+    font-family:'IBM Plex Mono',monospace !important;
+    overflow-x:auto;
+    position:relative;
+  }
+  code[class*="language-"],pre[class*="language-"]{
+    text-shadow:none !important;
+    color:#d8d2c4 !important;
+  }
+  /* Prism overrides */
+  .token.comment,.token.prolog,.token.doctype,.token.cdata{color:#5c636f;font-style:italic}
+  .token.punctuation{color:#8b8472}
+  .token.keyword{color:#e8a14b}
+  .token.string,.token.attr-value{color:#9bc28a}
+  .token.function{color:#6ec1b8}
+  .token.number,.token.boolean,.token.constant{color:#d96b4a}
+  .token.class-name,.token.builtin{color:#e8c66a}
+  .token.operator,.token.entity,.token.url{color:#a39b89}
+  .token.property{color:#c8b89e}
+  .token.decorator{color:#6ec1b8}
+
+  /* code inline */
+  :not(pre) > code{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.88em;
+    background:rgba(232,161,75,0.08);
+    color:var(--accent);
+    padding:2px 6px;
+    border-radius:3px;
+    border:1px solid rgba(232,161,75,0.15);
+  }
+
+  /* === Tables === */
+  .table-wrap{overflow-x:auto;margin:24px 0;border:1px solid var(--line);border-radius:6px}
+  table{
+    border-collapse:collapse;
+    width:100%;
+    font-size:13.5px;
+    background:var(--bg-elev);
+  }
+  thead{background:rgba(232,161,75,0.04)}
+  th{
+    text-align:left;
+    padding:14px 18px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--accent);
+    border-bottom:1px solid var(--line);
+  }
+  td{
+    padding:13px 18px;
+    border-bottom:1px solid var(--line-soft);
+    vertical-align:top;
+    color:var(--ink-dim);
+  }
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,0.015)}
+  td strong{color:var(--ink)}
+  .badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    font-weight:500;
+    padding:3px 9px;
+    border-radius:3px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+  }
+  .badge-yes{background:rgba(217,107,74,0.15);color:#e89175;border:1px solid rgba(217,107,74,0.3)}
+  .badge-no{background:rgba(110,193,184,0.12);color:var(--teal);border:1px solid rgba(110,193,184,0.25)}
+  .badge-opt{background:rgba(232,161,75,0.12);color:var(--accent);border:1px solid rgba(232,161,75,0.3)}
+
+  /* === Results hero === */
+  .results-block{
+    background:linear-gradient(180deg, rgba(232,161,75,0.04), transparent 80%);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:36px;
+    margin:30px 0;
+  }
+  .winner{
+    display:flex; align-items:baseline; gap:16px;
+    margin-bottom:24px;
+    padding-bottom:24px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .winner-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:0.18em;
+  }
+  .winner-name{
+    font-family:'Fraunces',serif;
+    font-size:30px;
+    font-weight:500;
+    color:var(--accent);
+    font-style:italic;
+  }
+  .winner-score{
+    margin-left:auto;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:30px;
+    color:var(--ink);
+  }
+
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line-soft);
+    border:1px solid var(--line-soft);
+    border-radius:6px;
+    margin:24px 0;
+    overflow:hidden;
+  }
+  .metric{
+    background:var(--bg-elev);
+    padding:22px 24px;
+  }
+  .metric-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.15em;
+    color:var(--ink-faint);
+    margin-bottom:8px;
+  }
+  .metric-val{
+    font-family:'Fraunces',serif;
+    font-size:32px;
+    font-weight:400;
+    color:var(--ink);
+    line-height:1;
+  }
+  .metric-val em{font-style:italic;color:var(--accent)}
+
+  .confusion{
+    display:grid;
+    grid-template-columns:auto 1fr 1fr;
+    gap:1px;
+    background:var(--line-soft);
+    border:1px solid var(--line-soft);
+    border-radius:6px;
+    overflow:hidden;
+    margin:24px 0;
+    max-width:420px;
+  }
+  .confusion > div{
+    background:var(--bg-elev);
+    padding:14px 18px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+  }
+  .confusion .h{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.1em;font-family:'IBM Plex Sans',sans-serif;font-weight:500}
+  .confusion .big{font-size:22px;color:var(--accent);font-family:'Fraunces',serif;font-weight:500}
+
+  /* === Step list === */
+  .steps{counter-reset:step;list-style:none;padding:0;margin:30px 0}
+  .steps li{
+    counter-increment:step;
+    position:relative;
+    padding:14px 0 14px 56px;
+    border-bottom:1px dashed var(--line-soft);
+    color:var(--ink-dim);
+  }
+  .steps li:last-child{border-bottom:none}
+  .steps li::before{
+    content:counter(step,decimal-leading-zero);
+    position:absolute; left:0; top:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--accent);
+    background:var(--accent-soft);
+    border:1px solid rgba(232,161,75,0.25);
+    width:36px; height:24px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:3px;
+  }
+
+  /* === Rule box === */
+  .rule{
+    background:linear-gradient(135deg,rgba(110,193,184,0.05),rgba(232,161,75,0.04));
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:32px;
+    margin:28px 0;
+    position:relative;
+  }
+  .rule-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--teal);
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .rule-text{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    line-height:1.45;
+    font-weight:400;
+    color:var(--ink);
+  }
+  .rule-text em{color:var(--accent);font-style:italic}
+
+  /* === Pipeline flow === */
+  .pipeline-flow{
+    display:grid;
+    grid-template-columns:repeat(11,1fr);
+    gap:6px;
+    margin:30px 0;
+  }
+  .pipeline-step{
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:14px 8px;
+    text-align:center;
+    font-size:11px;
+    line-height:1.3;
+    color:var(--ink-dim);
+    position:relative;
+    transition:all .2s ease;
+  }
+  .pipeline-step:hover{
+    border-color:var(--accent);
+    color:var(--ink);
+    transform:translateY(-2px);
+  }
+  .pipeline-step .pn{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--accent);
+    margin-bottom:6px;
+    font-weight:500;
+  }
+
+  /* === Final cards === */
+  .decision-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    margin:30px 0;
+  }
+  .decision-card{
+    background:var(--bg-elev);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:24px;
+  }
+  .decision-card h4{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.15em;
+    color:var(--accent);
+    margin:0 0 16px;
+    font-weight:500;
+  }
+  .decision-card ul{padding-left:18px;font-size:13.5px}
+  .decision-card li{margin-bottom:8px;color:var(--ink-dim)}
+
+  /* === Footer === */
+  footer{
+    margin-top:80px;
+    padding-top:32px;
+    border-top:1px solid var(--line-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+
+  /* === Mobile === */
+  @media (max-width: 1024px){
+    .shell{grid-template-columns:1fr}
+    nav.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--line-soft);padding:24px}
+    main{padding:0 24px 60px}
+    .hero{padding:48px 0 40px}
+    .pipeline-flow{grid-template-columns:repeat(3,1fr)}
+    .decision-grid{grid-template-columns:1fr}
+    .metric-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ SIDEBAR ============ -->
+  <nav class="sidebar">
+    <div class="brand">ML Pipeline <span>·</span> Manual</div>
+    <div class="brand-sub">Scikit-learn Classification</div>
+    <ul class="nav-list">
+      <li><a href="#sec-0"><span class="num">00</span> Introduction</a></li>
+      <li><a href="#sec-1"><span class="num">01</span> Load &amp; Inspect</a></li>
+      <li><a href="#sec-2"><span class="num">02</span> Statistical Understanding</a></li>
+      <li><a href="#sec-3"><span class="num">03</span> Data Preprocessing</a></li>
+      <li><a href="#sec-4"><span class="num">04</span> Feature Encoding</a></li>
+      <li><a href="#sec-5"><span class="num">05</span> Feature Generation</a></li>
+      <li><a href="#sec-6"><span class="num">06</span> Normalization Decision</a></li>
+      <li><a href="#sec-7"><span class="num">07</span> Full Pipeline</a></li>
+      <li><a href="#sec-8"><span class="num">08</span> All Algorithms</a></li>
+      <li><a href="#sec-9"><span class="num">09</span> Actual Output</a></li>
+      <li><a href="#sec-10"><span class="num">10</span> Reference Summary</a></li>
+    </ul>
+  </nav>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <header class="hero">
+      <div class="eyebrow">Technical Manual · v1.0</div>
+      <h1 class="title">Preprocessing, Feature&nbsp;Engineering<br>and the <em>Normalization</em> Decision<br>for Scikit-learn Classifiers.</h1>
+      <p class="lede">A complete, justified pipeline built around one dataset — <code>customer_dataset.csv</code> — walked in the exact order a real project needs: inspect, understand, preprocess, encode, generate, decide on scaling, pipeline, compare, evaluate.</p>
+      <div class="meta-row">
+        <span><strong>505</strong> rows</span>
+        <span><strong>11</strong> columns</span>
+        <span>Target: <strong>Purchased</strong></span>
+        <span><strong>14</strong> classifiers compared</span>
+      </div>
+    </header>
+
+    <!-- ===== 0. INTRODUCTION ===== -->
+    <section id="sec-0">
+      <div class="sec-num">00 — INTRODUCTION</div>
+      <h2>Why this manual, in this order.</h2>
+      <p>This manual is built around <em>one</em> dataset: <code>customer_dataset.csv</code> (505 rows, 11 columns, target column <code>Purchased</code>). It walks through a complete scikit-learn pipeline in the order a real project actually needs it:</p>
+      <ol class="steps">
+        <li>Load &amp; inspect data</li>
+        <li>Statistical understanding of every feature (before touching anything)</li>
+        <li>Data preprocessing (missing values, duplicates, outliers)</li>
+        <li>Feature extraction (encoding categorical → numeric)</li>
+        <li>Feature generation (creating new features from existing ones)</li>
+        <li>The normalization decision — explained, then answered per algorithm</li>
+        <li><code>Pipeline</code> + <code>ColumnTransformer</code> implementation</li>
+        <li>All major scikit-learn classification algorithms trained through the same pipeline</li>
+        <li>Evaluation and comparison</li>
+        <li>Final reference tables</li>
+      </ol>
+      <div class="why">
+        <span class="why-label">A note on this manual</span>
+        <p>Every code block is followed by a <span class="why-inline">Why</span>note explaining the <strong>reasoning</strong>, not just what the code does. Nothing here is copy-paste without justification.</p>
+      </div>
+    </section>
+
+    <!-- ===== 1. LOAD & FIRST INSPECTION ===== -->
+    <section id="sec-1">
+      <div class="sec-num">01 — LOAD &amp; FIRST INSPECTION</div>
+      <h2>Before any decision: <em>know</em> the data.</h2>
+      <p>Before any preprocessing decision — impute? scale? encode? — you must know how many rows/columns you have, which columns are numeric vs categorical (<code>dtypes</code>), and what the raw values actually look like (<code>head()</code>).</p>
+
+      <pre><code class="language-python">import pandas as pd
+import numpy as np
+
+df = pd.read_csv("customer_dataset.csv")
+print(df.shape)
+print(df.dtypes)
+print(df.head())
+
+df.info()
+df.isna().sum().sort_values(ascending=False)
+df.drop_duplicates().shape[0], df.shape[0]</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>Skipping this step is the single most common cause of <strong>silent pipeline bugs</strong> — e.g. treating a numeric-looking ID column as a feature, or encoding a column that is secretly all-missing.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p><code>isna().sum()</code> tells you where missing data lives. This single command decides your <strong>entire imputation strategy</strong> in Section 3 — you cannot design an imputer before knowing which columns need one.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>Comparing <code>shape</code> before/after <code>drop_duplicates()</code> tells you whether duplicate rows exist <em>without committing to removing them yet</em>. Duplicates inflate the apparent size of a class and bias train/test splits — the same row can leak into both train and test.</p>
+      </div>
+    </section>
+
+    <!-- ===== 2. STATISTICAL UNDERSTANDING ===== -->
+    <section id="sec-2">
+      <div class="sec-num">02 — UNDERSTANDING FEATURES USING STATISTICS</div>
+      <h2>Never impute, scale, or encode a column until you understand its <em>statistical shape</em>.</h2>
+
+      <h3><span class="h3-num">2.1</span>Numeric columns — central tendency, spread, shape</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Statistic</th><th>What it tells you</th><th>Preprocessing decision it drives</th></tr></thead>
+          <tbody>
+            <tr><td><strong>mean</strong> vs <strong>50%</strong> (median)</td><td>If far apart → distribution is skewed</td><td>Skewed → impute with <strong>median</strong>, not mean</td></tr>
+            <tr><td><strong>std</strong></td><td>Spread of the feature</td><td>High std relative to mean → likely needs scaling</td></tr>
+            <tr><td><strong>min / max</strong></td><td>Range, presence of impossible values</td><td>Impossible values (e.g. negative age) → treat as errors</td></tr>
+            <tr><td><strong>skew</strong></td><td>Symmetry. 0 = symmetric, &gt;1 or &lt;-1 = heavily skewed</td><td>Heavily skewed → log-transform or use tree-based models (skew-insensitive)</td></tr>
+            <tr><td><strong>kurtosis</strong></td><td>Tailedness / outlier-proneness. High kurtosis = heavy tails</td><td>High kurtosis → check for outliers, use robust scaling</td></tr>
+            <tr><td><strong>missing_%</strong></td><td>Fraction missing</td><td>&lt;5% → simple impute; &gt;30% → consider dropping the column</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <pre><code class="language-python">numeric_cols = ["Age", "Income", "Experience_Years", "CreditScore", "StudyHoursPerWeek"]
+
+stats = df[numeric_cols].describe().T
+stats["skew"]     = df[numeric_cols].skew()
+stats["kurtosis"] = df[numeric_cols].kurt()
+stats["missing_%"] = df[numeric_cols].isna().mean() * 100
+print(stats)
+
+# IQR outlier detection
+for col in numeric_cols:
+    q1, q3 = df[col].quantile([0.25, 0.75])
+    iqr = q3 - q1
+    lower, upper = q1 - 1.5*iqr, q3 + 1.5*iqr
+    n_out = ((df[col] &lt; lower) | (df[col] &gt; upper)).sum()
+    print(f"{col}: {n_out} outliers outside [{lower:.1f}, {upper:.1f}]")</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>The IQR rule is the standard, distribution-free way to flag outliers. In this dataset <code>Income</code> has manually inflated values (5×) — this is exactly what this check will surface. Knowing outliers exist <strong>before choosing a scaler</strong> tells you to prefer <code>RobustScaler</code> over <code>StandardScaler</code> for that column (Section 6).</p>
+      </div>
+
+      <pre><code class="language-python">import scipy.stats as st
+for col in numeric_cols:
+    stat, p = st.shapiro(df[col].dropna().sample(min(500, df[col].dropna().shape[0]), random_state=0))
+    print(f"{col}: Shapiro-Wilk p-value = {p:.4f} -> {'looks normal' if p>0.05 else 'NOT normal'}")
+
+df[numeric_cols].corr(numeric_only=True)</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>The Shapiro-Wilk test formally checks normality (p &gt; 0.05 → cannot reject normality). Algorithms and scalers that assume/benefit from roughly-normal input (Logistic Regression, LDA, <code>StandardScaler</code>) are safer when this holds. Non-normal columns (like <code>Income</code>, typically right-skewed) are candidates for a log/power transform or a <code>RobustScaler</code> / <code>QuantileTransformer</code>.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>Correlation between numeric features detects redundancy (e.g. <code>Age</code> and <code>Experience_Years</code> are constructed to be correlated in this dataset). Highly correlated pairs (|r| &gt; 0.85–0.9) can hurt linear models (multicollinearity) and are candidates to drop or combine in Section 5's feature generation step.</p>
+      </div>
+
+      <h3><span class="h3-num">2.2</span>Categorical columns — frequency and association with target</h3>
+
+      <pre><code class="language-python">categorical_cols = ["Gender", "Education", "City", "EmploymentStatus"]
+for col in categorical_cols:
+    print(df[col].value_counts(dropna=False, normalize=True) * 100)
+    print("-"*30)
+
+from scipy.stats import chi2_contingency
+for col in categorical_cols:
+    ct = pd.crosstab(df[col], df["Purchased"])
+    chi2, p, dof, _ = chi2_contingency(ct)
+    print(f"{col}: chi2={chi2:.2f}, p={p:.4f} -> "
+          f"{'associated with target' if p&lt;0.05 else 'NOT associated'}")</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p><code>value_counts(normalize=True)</code> shows class balance inside each categorical feature. A category that appears in &lt;1% of rows is a candidate for grouping into "Other" — rare categories create near-empty one-hot columns that add noise/overfitting risk without predictive value.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>The Chi-square test of independence measures whether a categorical feature is statistically associated with the target. This is the categorical-feature equivalent of correlation, and is the main statistical tool for feature selection among categorical columns — a feature with p &gt; 0.05 contributes little signal and is a candidate to drop.</p>
+      </div>
+
+      <h3><span class="h3-num">2.3</span>Target balance</h3>
+      <pre><code class="language-python">df["Purchased"].value_counts(normalize=True) * 100</code></pre>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>Class balance decides your evaluation metric. A near-balanced target (this dataset is ~57%/43%) means accuracy is a reasonably fair metric; a highly imbalanced target would require precision/recall/F1/ROC-AUC instead, and possibly <code>class_weight="balanced"</code> in every model in Section 8.</p>
+      </div>
+    </section>
+
+    <!-- ===== 3. DATA PREPROCESSING ===== -->
+    <section id="sec-3">
+      <div class="sec-num">03 — DATA PREPROCESSING</div>
+      <h2>Clean before you transform.</h2>
+
+      <h3><span class="h3-num">3.1</span>Remove duplicate rows</h3>
+      <pre><code class="language-python">df = df.drop_duplicates().reset_index(drop=True)</code></pre>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p>Duplicates were identified in Section 1. Leaving them in lets the same observation appear in both the train and test split after a random split, artificially inflating test accuracy (<strong>data leakage</strong>). They must be removed <em>before</em> the train/test split, not inside the pipeline.</p>
+      </div>
+
+      <h3><span class="h3-num">3.2</span>Drop identifier columns</h3>
+      <pre><code class="language-python">df = df.drop(columns=["CustomerID"])</code></pre>
+      <div class="why">
+        <span class="why-label">Why</span>
+        <p><code>CustomerID</code> is a unique row identifier with no predictive meaning. If left in and one-hot/ordinal encoded, a tree-based model could overfit by memorizing IDs. IDs are always dropped before modeling, never encoded.</p>
+      </div>
+
+      <h3><span class="h3-num">3.3</span>Separate features and target, then split</h3>
+      <pre><code class="language-python">from sklearn.model_selection import train_test_split
+
+X = df.drop(columns=["Purchased"])
+y = df["Purchased"].map({"No": 0, "Yes": 1})
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)</code></pre>
+      <div class="why">
+        <span class="why-label">Why stratify=y</span>
+        <p>Keeps the same class ratio in train and test as in the full data — important since the target is not perfectly 50/50.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why split before imputing / encoding / scaling</span>
+        <p>Any statistic learned from the data (a median for imputation, a mean/std for scaling, a category list for encoding) must be learned only on the training set and then applied to the test set. Fitting on the full dataset before splitting <strong>leaks test-set information into training</strong> — a common and serious mistake. This is exactly why Section 7 wraps everything in one <code>Pipeline</code> / <code>ColumnTransformer</code>: it guarantees <code>fit</code> only ever sees training data.</p>
+      </div>
+
+      <h3><span class="h3-num">3.4</span>Handling missing values</h3>
+      <p>Missingness map from Section 1: <code>Age</code>, <code>Income</code>, <code>Experience_Years</code> (numeric) and <code>Gender</code>, <code>Education</code> (categorical) all have missing values.</p>
+      <pre><code class="language-python">from sklearn.impute import SimpleImputer
+
+# Numeric: median imputation (robust to the skew/outliers found in Section 2)
+num_imputer = SimpleImputer(strategy="median")
+
+# Categorical: most-frequent, or a constant "Missing" category
+cat_imputer = SimpleImputer(strategy="most_frequent")
+
+# Optional: create "was missing" indicator flags before imputing
+for col in ["Age", "Income", "Experience_Years"]:
+    X_train[f"{col}_was_missing"] = X_train[col].isna().astype(int)
+    X_test[f"{col}_was_missing"]  = X_test[col].isna().astype(int)</code></pre>
+      <div class="why">
+        <span class="why-label">Why median, not mean, for numeric columns</span>
+        <p>Section 2 showed <code>Income</code> is right-skewed with outliers. The mean is pulled toward outliers; the median is not. Using the mean here would systematically over-impute income.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why most-frequent (or a "Missing" constant) for categorical columns</span>
+        <p>Categorical data has no arithmetic mean. <code>most_frequent</code> is a safe default; an alternative that is often better is imputing with the constant string <code>"Missing"</code> so the fact that a value was missing becomes its own informative category — worth trying if missingness itself correlates with the target (test with the Chi-square method from 2.2 on a missingness indicator).</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why indicator flags</span>
+        <p>If missingness itself is informative (e.g. people who skip reporting income behave differently), the raw imputed value alone throws that signal away. An indicator flag preserves it as a separate, always-non-missing binary feature.</p>
+      </div>
+
+      <h3><span class="h3-num">3.5</span>Handling outliers (Income)</h3>
+      <pre><code class="language-python">q1, q3 = X_train["Income"].quantile([0.25, 0.75])
+iqr = q3 - q1
+lower, upper = q1 - 1.5*iqr, q3 + 1.5*iqr
+X_train["Income"] = X_train["Income"].clip(lower, upper)
+X_test["Income"]  = X_test["Income"].clip(lower, upper)</code></pre>
+      <div class="why">
+        <span class="why-label">Why clip (winsorize) instead of delete</span>
+        <p>Deleting rows loses information from other, otherwise-valid columns in the same row and shrinks an already-limited training set. Clipping to the IQR bound caps the effect of extreme values while keeping the row. Note bounds are computed on train only and reused on test (no leakage). Tree-based models (Decision Tree, Random Forest, Gradient Boosting) are largely insensitive to this step since they split on rank/threshold, not magnitude — but linear/distance-based models (Logistic Regression, KNN, SVM) are sensitive to a few extreme values dominating a scaled feature, so this step matters most for them.</p>
+      </div>
+    </section>
+
+    <!-- ===== 4. FEATURE ENCODING ===== -->
+    <section id="sec-4">
+      <div class="sec-num">04 — FEATURE EXTRACTION (ENCODING)</div>
+      <h2>Convert categorical → numeric, by <em>order</em>.</h2>
+      <p>Scikit-learn models require numeric input, so every categorical column must be converted. Which encoder to use depends on whether the category has a natural order.</p>
+
+      <h3><span class="h3-num">4.1</span>Ordinal encoding — for ordered categories</h3>
+      <p><code>Education</code> has a natural rank: High School &lt; Bachelor &lt; Master &lt; PhD.</p>
+      <pre><code class="language-python">from sklearn.preprocessing import OrdinalEncoder
+
+education_order = [["High School", "Bachelor", "Master", "PhD"]]
+ordinal_enc = OrdinalEncoder(
+    categories=education_order,
+    handle_unknown="use_encoded_value",
+    unknown_value=-1
+)</code></pre>
+      <div class="why">
+        <span class="why-label">Why ordinal, not one-hot, for Education</span>
+        <p>One-hot encoding would throw away the fact that PhD &gt; Master &gt; Bachelor &gt; High School — information a linear model or a distance-based model (KNN, SVM) could otherwise use directly as a single numeric feature. Tree-based models can split on either encoding similarly well, but ordinal is more compact (1 column vs. 4).</p>
+      </div>
+
+      <h3><span class="h3-num">4.2</span>One-hot encoding — for unordered (nominal) categories</h3>
+      <p><code>Gender</code>, <code>City</code>, <code>EmploymentStatus</code> have no natural order.</p>
+      <pre><code class="language-python">from sklearn.preprocessing import OneHotEncoder
+onehot_enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)</code></pre>
+      <div class="why">
+        <span class="why-label">Why one-hot, not ordinal, for nominal columns</span>
+        <p>Assigning <code>City</code> the codes Dhaka=0, Chittagong=1, Sylhet=2… would imply Sylhet is "more than" Dhaka by a factor that has no real meaning. Linear models and distance-based models would wrongly treat that numeric gap as informative. One-hot avoids inventing an order that doesn't exist.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why handle_unknown="ignore"</span>
+        <p>If the test set (or future production data) contains a category never seen in training, this prevents a crash — the row simply gets all-zero dummy columns instead.</p>
+      </div>
+
+      <div class="rule">
+        <div class="rule-label">Rule of thumb · used throughout this manual</div>
+        <div class="table-wrap" style="margin:0;border:none">
+          <table>
+            <thead><tr><th>Category type</th><th>Example column</th><th>Encoder</th></tr></thead>
+            <tbody>
+              <tr><td>Has a natural rank/order</td><td>Education</td><td><code>OrdinalEncoder</code> (with explicit order)</td></tr>
+              <tr><td>No natural order (nominal)</td><td>Gender, City, EmploymentStatus</td><td><code>OneHotEncoder</code></td></tr>
+              <tr><td>High-cardinality nominal (many categories)</td><td>not present here, but e.g. postal code</td><td>Target/Frequency encoding (avoids column explosion)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 5. FEATURE GENERATION ===== -->
+    <section id="sec-5">
+      <div class="sec-num">05 — FEATURE GENERATION</div>
+      <h2>Create features a model <em>can't</em> find on its own.</h2>
+      <p>Feature generation adds new columns derived from existing ones, to expose relationships a model might not find on its own.</p>
+
+      <pre><code class="language-python">def generate_features(X):
+    X = X.copy()
+    # 1. Ratio feature: income per year of experience
+    X["Income_per_Experience"] = X["Income"] / (X["Experience_Years"] + 1)
+
+    # 2. Interaction feature: age * study hours
+    X["Age_x_StudyHours"] = X["Age"] * X["StudyHoursPerWeek"]
+
+    # 3. Binned feature: age group (captures non-linear age effects)
+    X["Age_Group"] = pd.cut(
+        X["Age"], bins=[0, 25, 35, 50, 100],
+        labels=["&lt;=25", "26-35", "36-50", "50+"]
+    )
+
+    # 4. Domain flag: strong credit
+    X["Good_Credit"] = (X["CreditScore"] &gt;= 700).astype(int)
+    return X
+
+X_train = generate_features(X_train)
+X_test  = generate_features(X_test)
+
+# Age_Group is a new nominal categorical column; Good_Credit is already binary numeric.
+# Age_Group must go through the same one-hot pipeline as City/Gender/EmploymentStatus.
+categorical_cols_nominal = ["Gender", "City", "EmploymentStatus", "Age_Group"]</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why Income_per_Experience (ratio)</span>
+        <p>Section 2 found <code>Age</code> and <code>Experience_Years</code> correlated, and both loosely related to <code>Income</code>. A ratio feature can expose "efficiency" (high income for relatively little experience) that neither raw column shows alone — useful for linear models, which cannot construct ratios internally (tree models can partially approximate this via repeated splits, but not exactly).</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why Age_x_StudyHours (interaction)</span>
+        <p>Linear models (Logistic Regression, Naive Bayes, LDA) assume features act independently/additively. If the combination of age and study habits matters more than either alone, an explicit interaction term is the only way a linear model can see it. Tree-based models can already discover interactions via sequential splits, so this feature helps linear/distance models the most.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why Age_Group (binning)</span>
+        <p>Converts a continuous, possibly non-linear age effect into discrete buckets. Useful for linear models when the true relationship between age and the target is not a straight line (e.g. very young and very old behave similarly, middle-aged differently) — binning + one-hot lets a linear model fit a "step function" it couldn't fit on raw <code>Age</code>.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why Good_Credit (domain threshold flag)</span>
+        <p>Encodes a known business rule (≥700 = "good" credit) directly, saving the model from having to (re)discover a threshold that's already common knowledge in the credit domain.</p>
+      </div>
+
+      <div class="why">
+        <span class="why-label">Important — leakage rule</span>
+        <p>Every one of these transformations uses only information already in the row (no target, no aggregate statistic computed across the whole dataset), so it is safe to apply identically and independently to <code>X_train</code> and <code>X_test</code> without leakage. If you ever generate a feature from an aggregate (e.g. "average income per city"), that aggregate must be computed on the training set only and then mapped onto the test set.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why route new categoricals back through encoding</span>
+        <p>Any feature generation step that produces a new categorical column must be routed into the same encoding logic from Section 4 — otherwise it will crash the pipeline as raw text reaching a model that expects numbers.</p>
+      </div>
+    </section>
+
+    <!-- ===== 6. NORMALIZATION ===== -->
+    <section id="sec-6">
+      <div class="sec-num">06 — NORMALIZATION: DO YOU NEED IT?</div>
+      <h2>The decision, per algorithm.</h2>
+
+      <h3><span class="h3-num">6.1</span>What normalization actually fixes</h3>
+      <p>Our numeric features are on wildly different scales: <code>Age</code> (~18–65), <code>Income</code> (~8,000–90,000+), <code>CreditScore</code> (~300–850), <code>StudyHoursPerWeek</code> (~0–12). Any algorithm that computes distances or gradient-based weight updates across features will let the largest-scale feature (<code>Income</code>) dominate purely because of its numeric range — <strong>not</strong> because it is more important.</p>
+
+      <pre><code class="language-python">X_train[["Age","Income","Experience_Years","CreditScore","StudyHoursPerWeek"]].describe().loc[["min","max","std"]]</code></pre>
+      <div class="why">
+        <span class="why-label">Why run this again here</span>
+        <p>It's the direct evidence for the normalization decision — ranges differ by 3–4 orders of magnitude (<code>StudyHoursPerWeek</code> max ~12 vs <code>Income</code> max ~90,000), which is the exact condition that breaks distance- and gradient-based models if left unscaled.</p>
+      </div>
+
+      <h3><span class="h3-num">6.2</span>The rule for deciding "need it or not"</h3>
+      <div class="rule">
+        <div class="rule-label">The rule</div>
+        <div class="rule-text">
+          Normalization/scaling is needed when the algorithm's math depends on the <em>numeric magnitude or distance</em> between feature values.<br><br>
+          Normalization is <em>NOT</em> needed when the algorithm only depends on the relative order (rank) of values within a single feature at a time — which is what a decision-tree split does (<code>feature &lt;= threshold</code>). Multiplying that feature by 1000 does not change which rows fall left or right of the split.
+        </div>
+      </div>
+
+      <h3><span class="h3-num">6.3</span>Per-algorithm table (scikit-learn classifiers)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Algorithm (sklearn class)</th><th>Scale?</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td><strong>LogisticRegression</strong></td><td><span class="badge badge-yes">YES</span></td><td>Gradient descent on weighted sum of features; unscaled large-range features get artificially large/unstable coefficients and slow/unstable convergence.</td></tr>
+            <tr><td><strong>SGDClassifier</strong></td><td><span class="badge badge-yes">YES</span></td><td>Directly gradient-based; same reason as Logistic Regression, even more sensitive since it's literally stochastic gradient descent.</td></tr>
+            <tr><td><strong>KNeighborsClassifier (KNN)</strong></td><td><span class="badge badge-yes">YES</span></td><td>Classification is based on Euclidean/Minkowski distance; a single large-range feature (Income) would dominate the distance metric and make all other features irrelevant.</td></tr>
+            <tr><td><strong>SVC / LinearSVC (SVM)</strong></td><td><span class="badge badge-yes">YES</span></td><td>Maximizes a margin defined by distances in feature space; kernel methods (RBF, poly) compute dot products/distances that are scale-sensitive.</td></tr>
+            <tr><td><strong>LinearDiscriminantAnalysis (LDA)</strong></td><td><span class="badge badge-yes">YES</span></td><td>Assumes/uses covariance structure across features; unscaled features distort the estimated covariance matrix.</td></tr>
+            <tr><td><strong>Perceptron, PassiveAggressiveClassifier</strong></td><td><span class="badge badge-yes">YES</span></td><td>Linear, gradient/margin-based updates — same family as Logistic Regression/SVM.</td></tr>
+            <tr><td><strong>MLPClassifier (Neural Network)</strong></td><td><span class="badge badge-yes">YES</span></td><td>Gradient descent through weighted sums + activation functions; large-scale inputs cause exploding gradients / slow, unstable training.</td></tr>
+            <tr><td><strong>GaussianNB (Naive Bayes)</strong></td><td><span class="badge badge-opt">OPTIONAL</span></td><td>Models each feature's own distribution independently (assumes Gaussian per feature) — it doesn't compare magnitudes across features the way distance methods do. Scaling won't change predictions' ranking, but standardizing can improve numerical stability of variance estimation.</td></tr>
+            <tr><td><strong>DecisionTreeClassifier</strong></td><td><span class="badge badge-no">NO</span></td><td>Splits are threshold rules on one feature at a time (<code>x &lt;= t</code>); scaling a feature (multiplying/shifting) does not change which side of the threshold any row falls on.</td></tr>
+            <tr><td><strong>RandomForestClassifier</strong></td><td><span class="badge badge-no">NO</span></td><td>Ensemble of decision trees — same reasoning as above, scale-invariant per feature.</td></tr>
+            <tr><td><strong>ExtraTreesClassifier</strong></td><td><span class="badge badge-no">NO</span></td><td>Same as Random Forest — tree-based, split-based, scale-invariant.</td></tr>
+            <tr><td><strong>GradientBoostingClassifier</strong></td><td><span class="badge badge-no">NO</span></td><td>Boosted decision trees — splits are threshold-based, scale-invariant.</td></tr>
+            <tr><td><strong>HistGradientBoostingClassifier</strong></td><td><span class="badge badge-no">NO</span></td><td>Histogram-based gradient boosted trees — same reasoning.</td></tr>
+            <tr><td><strong>AdaBoostClassifier (with tree base estimator)</strong></td><td><span class="badge badge-no">NO</span></td><td>Base learners are typically decision stumps/trees — scale-invariant.</td></tr>
+            <tr><td><strong>XGBoost / LightGBM / CatBoost (external, tree-based)</strong></td><td><span class="badge badge-no">NO</span></td><td>Same as other gradient-boosted trees — split-based, scale-invariant.</td></tr>
+            <tr><td><strong>BernoulliNB, MultinomialNB</strong></td><td><span class="badge badge-no">NO · must NOT standard-scale</span></td><td>These expect binary/count, non-negative data by design; standard scaling produces negative values that violate the model's assumptions. Use as-is or <code>MinMaxScaler</code> only if features aren't already counts/binary.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="h3-num">6.4</span>Short version (the direct answer)</h3>
+      <div class="decision-grid">
+        <div class="decision-card">
+          <h4>Needs it</h4>
+          <ul>
+            <li><strong>Distance-based</strong> → KNN, SVM</li>
+            <li><strong>Gradient/weight-based linear</strong> → Logistic Regression, SGDClassifier, Perceptron, LDA, Neural Network (MLP)</li>
+          </ul>
+        </div>
+        <div class="decision-card">
+          <h4>Optional / conditional</h4>
+          <ul>
+            <li><strong>Probability-density-based</strong> → Gaussian Naive Bayes (helps numerical stability, doesn't change the math's validity)</li>
+            <li><strong>Count-based NB</strong> → must NOT be standard-scaled (need non-negative counts/binary input)</li>
+          </ul>
+        </div>
+        <div class="decision-card">
+          <h4>Does NOT need it, ever</h4>
+          <ul>
+            <li><strong>Tree-based / split-based</strong> → Decision Tree, Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting, AdaBoost, XGBoost / LightGBM</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3><span class="h3-num">6.5</span>Which scaler, when you do need one</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scaler</th><th>When to use it</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><strong>StandardScaler</strong></td><td>Default choice for Logistic Regression, SVM, LDA, MLP when data is roughly normal (Section 2's Shapiro test)</td><td>Centers to mean 0, std 1 — matches the Gaussian-ish assumptions these models are most comfortable with.</td></tr>
+            <tr><td><strong>MinMaxScaler</strong></td><td>KNN, Neural Networks when you want a fixed bounded range (e.g. [0,1])</td><td>Distance-based/NN methods often work better with strictly bounded inputs; no assumption of normality.</td></tr>
+            <tr><td><strong>RobustScaler</strong></td><td>Any linear/distance model applied to a column with outliers (our <code>Income</code>, per Section 2's IQR check)</td><td>Uses median and IQR instead of mean/std, so it is not distorted by the outliers we found.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="why">
+        <span class="why-label">Applied decision for THIS dataset</span>
+        <p>Because <code>Income</code> has outliers (Section 2, confirmed again in 6.1) and the other numeric columns are only mildly skewed, this manual uses <code>RobustScaler</code> for all numeric columns feeding into scale-sensitive models (Logistic Regression, KNN, SVM, LDA, MLP), and <strong>no scaler at all</strong> for tree-based models (Decision Tree, Random Forest, Gradient Boosting).</p>
+      </div>
+    </section>
+
+    <!-- ===== 7. FULL PIPELINE ===== -->
+    <section id="sec-7">
+      <div class="sec-num">07 — BUILDING THE FULL PIPELINE</div>
+      <h2>One <code>ColumnTransformer</code>, parameterized.</h2>
+
+      <pre><code class="language-python">from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, RobustScaler
+
+numeric_features = ["Age", "Income", "Experience_Years", "CreditScore",
+                    "StudyHoursPerWeek", "Income_per_Experience", "Age_x_StudyHours"]
+binary_features  = ["Good_Credit", "Age_was_missing",
+                    "Income_was_missing", "Experience_Years_was_missing"]
+ordinal_features = ["Education"]
+nominal_features = ["Gender", "City", "EmploymentStatus", "Age_Group"]
+
+# --- Branch A: pipeline for SCALE-SENSITIVE models ---
+numeric_transformer_scaled = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler",  RobustScaler())
+])
+
+# --- Branch B: pipeline for TREE-BASED models (no scaling) ---
+numeric_transformer_unscaled = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median"))
+])
+
+ordinal_transformer = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OrdinalEncoder(
+        categories=[["High School","Bachelor","Master","PhD"]],
+        handle_unknown="use_encoded_value", unknown_value=-1
+    ))
+])
+
+nominal_transformer = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OneHotEncoder(handle_unknown="ignore"))
+])
+
+def build_preprocessor(scale_numeric: bool):
+    return ColumnTransformer(transformers=[
+        ("num", numeric_transformer_scaled if scale_numeric else numeric_transformer_unscaled,
+                 numeric_features),
+        ("bin", "passthrough",   binary_features),
+        ("ord", ordinal_transformer, ordinal_features),
+        ("nom", nominal_transformer,  nominal_features),
+    ])</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why two separate ColumnTransformer builders</span>
+        <p>Section 6 established that different families of algorithms need different treatment of numeric scale. Rather than hard-coding one scaler for everything (wrong for trees) or no scaler at all (wrong for linear/distance models), <code>build_preprocessor(scale_numeric=...)</code> lets every model in Section 8 request exactly the preprocessing its own math requires — this is the practical answer to "for which algorithm do we use normalization or not," expressed as code instead of just a table.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why everything lives inside Pipeline / ColumnTransformer</span>
+        <p>As stated in Section 3.3, this guarantees the imputer's median, the scaler's median/IQR, and the encoder's category list are all learned with <code>.fit()</code> only on <code>X_train</code> during cross-validation and grid search, and only ever <code>.transform()</code>-ed (never re-fit) on validation/test folds. This is the single most important anti-leakage guarantee in the whole manual.</p>
+      </div>
+    </section>
+
+    <!-- ===== 8. ALL ALGORITHMS ===== -->
+    <section id="sec-8">
+      <div class="sec-num">08 — ALL MAJOR SCIKIT-LEARN CLASSIFIERS</div>
+      <h2>14 algorithms, one pipeline, fair comparison.</h2>
+      <p>Each model below is wrapped with the preprocessor matching its normalization requirement from Section 6.</p>
+
+      <pre><code class="language-python">from sklearn.linear_model import LogisticRegression, SGDClassifier, Perceptron
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
+                              GradientBoostingClassifier, AdaBoostClassifier,
+                              HistGradientBoostingClassifier)
+from sklearn.neural_network import MLPClassifier
+
+models = {
+    # --- Needs scaling (scale_numeric=True) ---
+    "Logistic Regression":  (LogisticRegression(max_iter=1000, random_state=42), True),
+    "SGD Classifier":       (SGDClassifier(random_state=42),                     True),
+    "Perceptron":           (Perceptron(random_state=42),                        True),
+    "KNN":                  (KNeighborsClassifier(n_neighbors=7),                True),
+    "SVM (RBF)":            (SVC(kernel="rbf", probability=True, random_state=42), True),
+    "LDA":                  (LinearDiscriminantAnalysis(),                       True),
+    "MLP (Neural Net)":     (MLPClassifier(hidden_layer_sizes=(32,16),
+                                           max_iter=1000, random_state=42),      True),
+
+    # --- Scaling optional/not needed (scale_numeric=False) ---
+    "Gaussian Naive Bayes": (GaussianNB(),                                      False),
+    "Decision Tree":        (DecisionTreeClassifier(max_depth=6, random_state=42), False),
+    "Random Forest":        (RandomForestClassifier(n_estimators=300, random_state=42), False),
+    "Extra Trees":          (ExtraTreesClassifier(n_estimators=300, random_state=42),   False),
+    "Gradient Boosting":    (GradientBoostingClassifier(random_state=42),       False),
+    "HistGradientBoosting": (HistGradientBoostingClassifier(random_state=42),   False),
+    "AdaBoost":             (AdaBoostClassifier(random_state=42),               False),
+}
+
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
+import pandas as pd
+
+results = []
+for name, (clf, needs_scaling) in models.items():
+    pipe = Pipeline(steps=[
+        ("preprocessor", build_preprocessor(scale_numeric=needs_scaling)),
+        ("classifier",   clf)
+    ])
+    scores = cross_val_score(pipe, X_train, y_train, cv=5, scoring="accuracy")
+    results.append({
+        "Model": name,
+        "Scaled?": "Yes" if needs_scaling else "No",
+        "CV Accuracy (mean)": scores.mean(),
+        "CV Accuracy (std)":  scores.std()
+    })
+
+results_df = pd.DataFrame(results).sort_values("CV Accuracy (mean)", ascending=False)
+print(results_df.to_string(index=False))</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why this exact grouping</span>
+        <p>It is a direct implementation of the Section 6.3/6.4 table — every model that needs distance/gradient-safe input is flagged <code>True</code> (gets <code>RobustScaler</code>), every tree/ensemble-of-trees model is flagged <code>False</code> (skips scaling entirely, since it would only add compute cost with zero benefit).</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why 5-fold cross-validation instead of a single split</span>
+        <p>With 505 rows (and only ~400 after the train/test split), a single validation split has high variance — a "lucky" or "unlucky" split can make a model look better or worse than it is. Cross-validation averages performance over 5 different splits, giving a far more reliable comparison across 14 different algorithms.</p>
+      </div>
+
+      <pre><code class="language-python">best_name = results_df.iloc[0]["Model"]
+best_clf, best_scale = models[best_name]
+
+final_pipe = Pipeline(steps=[
+    ("preprocessor", build_preprocessor(scale_numeric=best_scale)),
+    ("classifier",   best_clf)
+])
+final_pipe.fit(X_train, y_train)
+
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
+y_pred  = final_pipe.predict(X_test)
+y_proba = final_pipe.predict_proba(X_test)[:, 1] if hasattr(final_pipe, "predict_proba") else None
+
+print(classification_report(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred))
+if y_proba is not None:
+    print("ROC-AUC:", roc_auc_score(y_test, y_proba))</code></pre>
+
+      <div class="why">
+        <span class="why-label">Why refit the winning model on the held-out test set</span>
+        <p>Cross-validation (above) is used purely for model selection among the 14 candidates. The untouched <code>X_test</code> / <code>y_test</code> (split once in Section 3.3 and never seen by any <code>.fit()</code> call until this point) gives the final, unbiased estimate of real-world performance — this separation between "selection" and "final evaluation" data is required to avoid overly optimistic reported accuracy.</p>
+      </div>
+    </section>
+
+    <!-- ===== 9. ACTUAL OUTPUT ===== -->
+    <section id="sec-9">
+      <div class="sec-num">09 — ACTUAL OUTPUT ON customer_dataset.csv</div>
+      <h2>The honest result.</h2>
+
+      <div class="results-block">
+        <div class="winner">
+          <div>
+            <div class="winner-label">Best model · 5-fold CV</div>
+            <div class="winner-name">Logistic Regression</div>
+          </div>
+          <div class="winner-score">0.6400 <span style="font-size:14px;color:var(--ink-faint)">±0.0556</span></div>
+        </div>
+
+        <div class="table-wrap" style="border:none">
+          <table>
+            <thead><tr><th>Model</th><th>Scaled?</th><th>CV Acc (mean)</th><th>CV Acc (std)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Logistic Regression</strong></td><td><span class="badge badge-yes">Yes</span></td><td>0.6400</td><td>0.0556</td></tr>
+              <tr><td>SVM (RBF)</td><td><span class="badge badge-yes">Yes</span></td><td>0.6325</td><td>0.0312</td></tr>
+              <tr><td>LDA</td><td><span class="badge badge-yes">Yes</span></td><td>0.6300</td><td>0.0579</td></tr>
+              <tr><td>HistGradientBoosting</td><td><span class="badge badge-no">No</span></td><td>0.6300</td><td>0.0610</td></tr>
+              <tr><td>Gaussian Naive Bayes</td><td><span class="badge badge-no">No</span></td><td>0.6175</td><td>0.0534</td></tr>
+              <tr><td>AdaBoost</td><td><span class="badge badge-no">No</span></td><td>0.6175</td><td>0.0350</td></tr>
+              <tr><td>Gradient Boosting</td><td><span class="badge badge-no">No</span></td><td>0.6150</td><td>0.0614</td></tr>
+              <tr><td>Random Forest</td><td><span class="badge badge-no">No</span></td><td>0.6125</td><td>0.0661</td></tr>
+              <tr><td>Extra Trees</td><td><span class="badge badge-no">No</span></td><td>0.5975</td><td>0.0267</td></tr>
+              <tr><td>Decision Tree</td><td><span class="badge badge-no">No</span></td><td>0.5950</td><td>0.0472</td></tr>
+              <tr><td>MLP (Neural Net)</td><td><span class="badge badge-yes">Yes</span></td><td>0.5925</td><td>0.0292</td></tr>
+              <tr><td>SGD Classifier</td><td><span class="badge badge-yes">Yes</span></td><td>0.5750</td><td>0.0326</td></tr>
+              <tr><td>KNN</td><td><span class="badge badge-yes">Yes</span></td><td>0.5675</td><td>0.0100</td></tr>
+              <tr><td>Perceptron</td><td><span class="badge badge-yes">Yes</span></td><td>0.5375</td><td>0.0481</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>Final held-out test set — Logistic Regression</h3>
+
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-label">Accuracy</div>
+          <div class="metric-val">0.59</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">ROC-AUC</div>
+          <div class="metric-val"><em>0.616</em></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Support</div>
+          <div class="metric-val">100</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>precision</th><th>recall</th><th>f1-score</th><th>support</th></tr></thead>
+          <tbody>
+            <tr><td><strong>0</strong></td><td>0.53</td><td>0.40</td><td>0.45</td><td>43</td></tr>
+            <tr><td><strong>1</strong></td><td>0.62</td><td>0.74</td><td>0.67</td><td>57</td></tr>
+            <tr><td><strong>accuracy</strong></td><td></td><td></td><td>0.59</td><td>100</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="confusion">
+        <div></div>
+        <div class="h">Pred 0</div>
+        <div class="h">Pred 1</div>
+        <div class="h">Actual 0</div>
+        <div class="big">17</div>
+        <div class="big">26</div>
+        <div class="h">Actual 1</div>
+        <div class="big">15</div>
+        <div class="big">42</div>
+      </div>
+
+      <div class="why">
+        <span class="why-label">Why the accuracy is modest (~59–64%) — and that is expected here</span>
+        <p>This dataset was generated synthetically with the target driven by a noisy logistic function of <code>Income</code> and <code>Age</code> plus random noise (by design, to make it realistic rather than trivially separable). A ~60–64% accuracy on a target that is only weakly/noisily related to the features is the correct, honest result — it is <strong>not a bug in the pipeline</strong>. On a real business dataset with a genuinely predictive signal, the same pipeline typically produces much higher scores; the code and reasoning above do not change.</p>
+      </div>
+      <div class="why">
+        <span class="why-label">Why Logistic Regression edges out the tree ensembles here</span>
+        <p>With only ~400 training rows and a genuinely noisy/weak signal, complex models (Random Forest, Gradient Boosting, MLP) have more capacity to overfit noise, while a simple linear model with few parameters generalizes more reliably. This is a common, real pattern on small/noisy datasets and is exactly why comparing multiple algorithm families (Section 8) rather than assuming "the fanciest model wins" is good practice.</p>
+      </div>
+    </section>
+
+    <!-- ===== 10. FINAL REFERENCE ===== -->
+    <section id="sec-10">
+      <div class="sec-num">10 — FINAL REFERENCE SUMMARY</div>
+      <h2>Everything, condensed.</h2>
+
+      <h3><span class="h3-num">10.1</span>Full pipeline order (must follow this sequence)</h3>
+      <div class="pipeline-flow">
+        <div class="pipeline-step"><span class="pn">01</span>Load &amp; inspect</div>
+        <div class="pipeline-step"><span class="pn">02</span>Profile features statistically</div>
+        <div class="pipeline-step"><span class="pn">03</span>Drop duplicates &amp; IDs</div>
+        <div class="pipeline-step"><span class="pn">04</span>Train/test split</div>
+        <div class="pipeline-step"><span class="pn">05</span>Impute missing (fit on train only)</div>
+        <div class="pipeline-step"><span class="pn">06</span>Handle outliers (IQR from train)</div>
+        <div class="pipeline-step"><span class="pn">07</span>Encode categoricals</div>
+        <div class="pipeline-step"><span class="pn">08</span>Generate new features</div>
+        <div class="pipeline-step"><span class="pn">09</span>Apply scaling per family</div>
+        <div class="pipeline-step"><span class="pn">10</span>Cross-validate candidates</div>
+        <div class="pipeline-step"><span class="pn">11</span>Refit best · evaluate on test</div>
+      </div>
+
+      <h3><span class="h3-num">10.2</span>Normalization decision — one-line per algorithm</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Algorithm</th><th>Normalize?</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Logistic Regression</td><td><span class="badge badge-yes">YES</span></td><td>gradient-based, weighted sum</td></tr>
+            <tr><td>SGDClassifier</td><td><span class="badge badge-yes">YES</span></td><td>gradient-based</td></tr>
+            <tr><td>Perceptron</td><td><span class="badge badge-yes">YES</span></td><td>gradient/margin-based</td></tr>
+            <tr><td>KNN</td><td><span class="badge badge-yes">YES</span></td><td>distance-based</td></tr>
+            <tr><td>SVM</td><td><span class="badge badge-yes">YES</span></td><td>margin/distance-based</td></tr>
+            <tr><td>LDA</td><td><span class="badge badge-yes">YES</span></td><td>covariance-based</td></tr>
+            <tr><td>MLPClassifier (Neural Net)</td><td><span class="badge badge-yes">YES</span></td><td>gradient-based</td></tr>
+            <tr><td>GaussianNB</td><td><span class="badge badge-opt">OPTIONAL</span></td><td>per-feature density; doesn't compare magnitude across features</td></tr>
+            <tr><td>BernoulliNB / MultinomialNB</td><td><span class="badge badge-no">NO</span></td><td>must stay non-negative/binary/count (do not standard-scale)</td></tr>
+            <tr><td>Decision Tree</td><td><span class="badge badge-no">NO</span></td><td>threshold split, scale-invariant</td></tr>
+            <tr><td>Random Forest</td><td><span class="badge badge-no">NO</span></td><td>ensemble of trees</td></tr>
+            <tr><td>Extra Trees</td><td><span class="badge badge-no">NO</span></td><td>ensemble of trees</td></tr>
+            <tr><td>Gradient Boosting / HistGradientBoosting</td><td><span class="badge badge-no">NO</span></td><td>boosted trees</td></tr>
+            <tr><td>AdaBoost (tree base)</td><td><span class="badge badge-no">NO</span></td><td>boosted trees</td></tr>
+            <tr><td>XGBoost / LightGBM / CatBoost</td><td><span class="badge badge-no">NO</span></td><td>boosted trees, external libraries, same reasoning</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3><span class="h3-num">10.3</span>Encoder decision</h3>
+      <div class="decision-grid">
+        <div class="decision-card">
+          <h4>Ordered categories</h4>
+          <p style="color:var(--ink-dim);font-size:13.5px">Education → <code>OrdinalEncoder</code> with explicit order</p>
+        </div>
+        <div class="decision-card">
+          <h4>Unordered (nominal)</h4>
+          <p style="color:var(--ink-dim);font-size:13.5px">Gender, City, EmploymentStatus, Age_Group → <code>OneHotEncoder</code></p>
+        </div>
+        <div class="decision-card">
+          <h4>High-cardinality nominal</h4>
+          <p style="color:var(--ink-dim);font-size:13.5px">Frequency/target encoding (avoid one-hot column explosion)</p>
+        </div>
+      </div>
+
+      <h3><span class="h3-num">10.4</span>Imputer decision</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Column type</th><th>Imputer strategy</th></tr></thead>
+          <tbody>
+            <tr><td>Numeric, skewed or has outliers</td><td><code>median</code></td></tr>
+            <tr><td>Numeric, roughly symmetric/normal</td><td><code>mean</code> is acceptable, <code>median</code> still safe</td></tr>
+            <tr><td>Categorical</td><td><code>most_frequent</code>, or constant <code>"Missing"</code> when missingness itself may be informative</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>ML Pipeline Manual · Built around customer_dataset.csv</span>
+      <span>Scikit-learn · 14 classifiers · 5-fold CV</span>
+    </footer>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+  // Scroll-spy: highlight current section in sidebar
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-list a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth fade-in on scroll for sections
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.05 });
+  document.querySelectorAll('section').forEach(s => {
+    s.style.opacity = '0';
+    s.style.transform = 'translateY(12px)';
+    s.style.transition = 'opacity .6s ease, transform .6s ease';
+    fadeObserver.observe(s);
+  });
+</script>
+
+</body>
+</html>
